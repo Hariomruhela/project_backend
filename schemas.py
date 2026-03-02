@@ -1,4 +1,6 @@
 from pydantic import BaseModel, EmailStr, field_validator
+from fastapi import Form, File, UploadFile
+
 from typing import List, Optional
 import re
 
@@ -49,13 +51,16 @@ class TokenResponse(BaseModel):
 # Project Create Schema
 # ------------------------
 class ProjectCreate(BaseModel):
+    id: int
     title: str
     description: str
     techstack: List[str]
-    live_link: Optional[str] = None
-    is_visible: Optional[bool] = True
+    image_url: Optional[str]
+    live_link: Optional[str]
+    is_visible: bool
 
-
+    class Config:
+        form_mode = True
 # ------------------------
 # Project Update Schema
 # ------------------------

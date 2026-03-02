@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -19,17 +19,21 @@ router = APIRouter(
 # -------------------------
 @router.post("/", response_model=schemas.ProjectResponse)
 def create_project(
-    title: str,
-    description: str,
-    techstack: List[str],
-    live_link: Optional[str] = None,
-    is_visible: bool = True,
-    image: UploadFile = File(...),
+    title: str = Form(...),
+    description: str = Form(...),
+    techstack: List[str] = Form(...),
+    live_link: Optional[str] = Form(None),
+    is_visible: bool = Form(True),
+    image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     admin = Depends(get_current_admin),
 ):
+    image_url = None
 
-    image_url = upload_image(image.file)
+    # ✅ Only upload if image exists
+    if image:
+        image_url = upload_image(image)
+
 
     project = models.Project(
         title=title,
