@@ -15,13 +15,13 @@ app = FastAPI(
 # this coment for test purpose
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", 
-        "http://127.0.0.1:3000",],      # or ["*"] for development
+    allow_origins=["*"],      # or ["*"] for development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    
 )
-
+print("CORS CONFIG LOADED")
 # Include Routers
 app.include_router(auth.router)
 app.include_router(projects.router)

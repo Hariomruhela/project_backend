@@ -6,7 +6,7 @@ import models, schemas
 from database import get_db
 from dependencies import get_current_user, get_current_admin
 from utils.cloudinary import upload_image
-
+from fastapi import Query
 
 router = APIRouter(
     prefix="/api/projects",
@@ -162,7 +162,7 @@ def delete_project(
 @router.patch("/{project_id}/visibility")
 def update_visibility(
     project_id: int,
-    is_visible: bool,
+    is_visible: bool = Query(...),
     db: Session = Depends(get_db),
     admin = Depends(get_current_admin),
 ):
@@ -174,5 +174,6 @@ def update_visibility(
 
     project.is_visible = is_visible
     db.commit()
+    db.refresh(project)
 
     return {"message": "Visibility updated successfully"}

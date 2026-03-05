@@ -19,3 +19,7 @@ utils/__pycache__
 # Build files
 dist/
 build/
+
+
+# SQLite database
+portfolio.db
