@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # MySQL Database URL
-DATABASE_URL = "mysql+pymysql://root:Atp%404466@localhost:3306/portfolio_d"
+DATABASE_URL = "sqlite:///./portfolio.db"
 # Create engine
 engine = create_engine(
     DATABASE_URL,
