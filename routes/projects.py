@@ -72,7 +72,20 @@ def get_projects(
 
     return projects
 
+# -------------------------
+# Public view visible projects
+# -------------------------
+@router.get("/public", response_model=List[schemas.ProjectResponse])
+def get_public_projects(db: Session = Depends(get_db)):
 
+    projects = db.query(models.Project).filter(
+        models.Project.is_visible == True
+    ).all()
+
+    for project in projects:
+        project.techstack = project.techstack.split(",")
+
+    return projects
 # -------------------------
 # Get Project By ID
 # -------------------------
@@ -102,7 +115,12 @@ def get_project(
 @router.put("/{project_id}", response_model=schemas.ProjectResponse)
 def update_project(
     project_id: int,
-    project_data: schemas.ProjectUpdate,
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    techstack: Optional[str] = Form(None),
+    live_link: Optional[str] = Form(None),
+    is_visible: Optional[bool] = Form(None),
+    image: UploadFile = File(None),
     db: Session = Depends(get_db),
     admin = Depends(get_current_admin),
 ):
@@ -112,25 +130,30 @@ def update_project(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    if project_data.title is not None:
-        project.title = project_data.title
+    if title:
+        project.title = title
 
-    if project_data.description is not None:
-        project.description = project_data.description
+    if description:
+        project.description = description
+    if techstack:
+        project.techstack = techstack
 
-    if project_data.techstack is not None:
-        project.techstack = ",".join(project_data.techstack)
+    if live_link:
+        project.live_link = live_link
 
-    if project_data.live_link is not None:
-        project.live_link = project_data.live_link
+    if is_visible is not None:
+        project.is_visible = is_visible
 
-    if project_data.is_visible is not None:
-        project.is_visible = project_data.is_visible
+    # ✅ Upload image to Cloudinary
+    if image:
+        image_url = upload_image(image)
+        project.image_url = image_url
 
     db.commit()
     db.refresh(project)
 
-    project.techstack = project.techstack.split(",")
+    if project.techstack:
+        project.techstack = project.techstack.split(",")
 
     return project
 
@@ -177,3 +200,9 @@ def update_visibility(
     db.refresh(project)
 
     return {"message": "Visibility updated successfully"}
+
+
+
+# -------------------------
+# Publical view the true Project
+# -------------------------
