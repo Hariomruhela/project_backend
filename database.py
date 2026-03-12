@@ -1,9 +1,15 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+import os
+
 
 # MySQL Database URL
-DATABASE_URL = "mysql+pymysql://root:atp%404466@localhost:3306/techquitoes_db"
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+
 # Create engine
 engine = create_engine(
     DATABASE_URL,
