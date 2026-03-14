@@ -8,7 +8,7 @@ from fastapi import HTTPException, status
 # -------------------------
 SECRET_KEY = "your_secret_key_here"   # change in production
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 260
+ACCESS_TOKEN_EXPIRE_MINUTES = 1440
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
