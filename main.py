@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import engine, Base
-from routes import auth, projects
+from routes import auth, projects, admin
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -25,6 +25,7 @@ print("CORS CONFIG LOADED")
 # Include Routers
 app.include_router(auth.router)
 app.include_router(projects.router)
+app.include_router(admin.router)
 
 
 @app.get("/")
