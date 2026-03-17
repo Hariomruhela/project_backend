@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, Text
+from sqlalchemy import Column, Integer, String, Boolean, Text, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
-
+from datetime import datetime
 
 # --------------------
 # User Model
@@ -29,3 +29,7 @@ class Project(Base):
     techstack = Column(String(255), nullable=False)  # comma separated
     live_link = Column(String(255), nullable=True)
     is_visible = Column(Boolean, default=True)
+     # ✅ ADD THESE
+    category = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

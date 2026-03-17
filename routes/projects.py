@@ -22,6 +22,7 @@ def create_project(
     title: str = Form(...),
     description: str = Form(...),
     techstack: List[str] = Form(...),
+    category: Optional[str] = Form(None),
     live_link: Optional[str] = Form(None),
     is_visible: bool = Form(True),
     image: Optional[UploadFile] = File(None),
@@ -40,6 +41,7 @@ def create_project(
         description=description,
         image_url=image_url,
         techstack=",".join(techstack),
+        category=category,   # ✅ NEW
         live_link=live_link,
         is_visible=is_visible,
     )
@@ -63,9 +65,14 @@ def get_projects(
 ):
 
     if current_user.is_admin:
-        projects = db.query(models.Project).all()
+        projects = db.query(models.Project)\
+        .order_by(models.Project.updated_at.desc())\
+        .all()
     else:
-        projects = db.query(models.Project).filter(models.Project.is_visible == True).all()
+        projects = db.query(models.Project)\
+            .filter(models.Project.is_visible == True)\
+            .order_by(models.Project.updated_at.desc())\
+            .all()
 
     for project in projects:
         project.techstack = project.techstack.split(",")
@@ -78,9 +85,10 @@ def get_projects(
 @router.get("/public", response_model=List[schemas.ProjectResponse])
 def get_public_projects(db: Session = Depends(get_db)):
 
-    projects = db.query(models.Project).filter(
-        models.Project.is_visible == True
-    ).all()
+    projects = db.query(models.Project)\
+        .filter(models.Project.is_visible == True)\
+        .order_by(models.Project.updated_at.desc())\
+        .all()
 
     for project in projects:
         project.techstack = project.techstack.split(",")
@@ -118,6 +126,7 @@ def update_project(
     title: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
     techstack: Optional[str] = Form(None),
+    category: Optional[str] = Form(None),   # ✅ NEW
     live_link: Optional[str] = Form(None),
     is_visible: Optional[bool] = Form(None),
     image: UploadFile = File(None),
@@ -137,6 +146,9 @@ def update_project(
         project.description = description
     if techstack:
         project.techstack = techstack
+        
+    if category is not None:
+        project.category = category   # ✅ NEW
 
     if live_link:
         project.live_link = live_link

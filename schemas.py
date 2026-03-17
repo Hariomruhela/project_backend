@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, field_validator
 from fastapi import Form, File, UploadFile
-
+from datetime import datetime 
 from typing import List, Optional
 import re
 
@@ -58,7 +58,7 @@ class ProjectCreate(BaseModel):
     image_url: Optional[str]
     live_link: Optional[str]
     is_visible: bool
-
+    category: Optional[str]
     class Config:
         form_mode = True
 # ------------------------
@@ -70,6 +70,7 @@ class ProjectUpdate(BaseModel):
     techstack: Optional[List[str]] = None
     live_link: Optional[str] = None
     is_visible: Optional[bool] = None
+    category: Optional[str]= None
 
 
 # ------------------------
@@ -83,6 +84,11 @@ class ProjectResponse(BaseModel):
     techstack: List[str]
     live_link: Optional[str]
     is_visible: bool
+    # ✅ NEW FIELDS
+    category: Optional[str]
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
 
     class Config:
         from_attributes = True
