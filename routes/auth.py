@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 import models
 import schemas
 from database import get_db
+from dependencies import get_current_user
 from utils.security import hash_password, verify_password, create_access_token
 
 router = APIRouter(
@@ -79,4 +80,15 @@ def login(
         "access_token": token,
         "token_type": "bearer",
         "is_admin": db_user.is_admin
+    }
+
+# -------------------------
+# Get Current Logged-in User
+# -------------------------
+@router.get("/me")
+def get_me(current_user: models.User = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "is_admin": current_user.is_admin
     }
