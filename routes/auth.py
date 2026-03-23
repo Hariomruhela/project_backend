@@ -6,7 +6,7 @@ import models
 import schemas
 from database import get_db
 from dependencies import get_current_user
-from utils.security import hash_password, verify_password, create_access_token
+from utils.security import hash_password, verify_password, create_access_token, create_refresh_token,decode_access_token
 
 router = APIRouter(
     prefix="/api/auth",
@@ -75,11 +75,29 @@ def login(
     token = create_access_token(
         {"user_id": db_user.id, "is_admin": db_user.is_admin}
     )
+    refresh_token = create_refresh_token({"user_id": db_user.id, "is_admin": db_user.is_admin})
 
     return {
         "access_token": token,
+        "refresh_token":refresh_token,
         "token_type": "bearer",
         "is_admin": db_user.is_admin
+    }
+
+@router.post("/refresh")
+def refresh_token(refresh_token: str):
+    
+    payload = decode_access_token(refresh_token)
+
+    if payload is None or payload.get("type") != "refresh":
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+    user_id = payload.get("user_id")
+
+    new_access_token = create_access_token({"user_id":user_id})
+
+    return {
+        "access_token": new_access_token
     }
 
 # -------------------------
