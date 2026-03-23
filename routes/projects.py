@@ -8,9 +8,12 @@ from dependencies import get_current_user, get_current_admin
 from utils.cloudinary import upload_image
 from fastapi import Query
 
+
+
 router = APIRouter(
     prefix="/api/projects",
-    tags=["Projects"]
+    tags=["Projects"],
+    
 )
 
 
@@ -214,7 +217,3 @@ def update_visibility(
     return {"message": "Visibility updated successfully"}
 
 
-
-# -------------------------
-# Publical view the true Project
-# -------------------------
