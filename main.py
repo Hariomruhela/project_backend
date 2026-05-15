@@ -25,7 +25,7 @@ origins = [
     "http://localhost:5173",
 
     # Frontend production URL
-     "https://techquitoes.vercel.app/"
+     "https://techquitoes.vercel.app"
 ]
 
 app.add_middleware(
