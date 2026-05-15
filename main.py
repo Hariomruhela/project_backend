@@ -4,30 +4,53 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 from routes import auth, projects, admin
 
-# Create tables
+# =========================
+# CREATE DATABASE TABLES
+# =========================
 Base.metadata.create_all(bind=engine)
 
+# =========================
+# FASTAPI APP
+# =========================
 app = FastAPI(
     title="Portfolio API",
     version="1.0.0"
 )
 
-# this coment for test purpose
+# =========================
+# CORS
+# =========================
+origins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+
+    # Frontend production URL
+     "https://techquitoes.vercel.app/"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],      # or ["*"] for development
+    allow_origins=origins,
+
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    
 )
+
 print("CORS CONFIG LOADED")
-# Include Routers
+
+# =========================
+# ROUTES
+# =========================
 app.include_router(auth.router)
 app.include_router(projects.router)
 app.include_router(admin.router)
 
-
+# =========================
+# ROOT ROUTE
+# =========================
 @app.get("/")
 def root():
-    return {"message": "Portfolio API is running 🚀"}
+    return {
+        "message": "Portfolio API is running 🚀"
+    }
