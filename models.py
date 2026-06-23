@@ -49,7 +49,7 @@ class Project(Base):
 
     description = Column(Text, nullable=False)
 
-    image_url = Column(String(500), nullable=False)
+    image_urls = Column(Text, nullable=True)
 
     techstack = Column(String(255), nullable=False)
 

@@ -55,7 +55,7 @@ class ProjectCreate(BaseModel):
     title: str
     description: str
     techstack: List[str]
-    image_url: Optional[str]
+    image_urls: Optional[List[str]] = []
     live_link: Optional[str]
     is_visible: bool
     category: Optional[str]
@@ -80,7 +80,7 @@ class ProjectResponse(BaseModel):
     id: int
     title: str
     description: str
-    image_url: str
+    image_urls: List[str] = []
     techstack: List[str]
     live_link: Optional[str]
     is_visible: bool

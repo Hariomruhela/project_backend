@@ -1,20 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Annotated  # Added Annotated
+from pydantic import WithJsonSchema           # Added WithJsonSchema
 
 import models, schemas
 from database import get_db
 from dependencies import get_current_user, get_current_admin
 from utils.cloudinary import upload_image
-from fastapi import Query
-
-
 
 router = APIRouter(
     prefix="/api/projects",
     tags=["Projects"],
-    
 )
+
+# 💡 Workaround for FastAPI Swagger UI multi-file picker bug
+SwaggerUploadFile = Annotated[UploadFile, WithJsonSchema({"type": "string", "format": "binary"})]
 
 
 # -------------------------
@@ -28,23 +28,21 @@ def create_project(
     category: Optional[str] = Form(None),
     live_link: Optional[str] = Form(None),
     is_visible: bool = Form(True),
-    image: Optional[UploadFile] = File(None),
+    images: List[SwaggerUploadFile] = File(...),  # ✅ Uses the Swagger-friendly type
     db: Session = Depends(get_db),
-    admin = Depends(get_current_admin),
+    admin=Depends(get_current_admin),
 ):
-    image_url = None
+    image_urls = []
 
-    # ✅ Only upload if image exists
-    if image:
-        image_url = upload_image(image)
-
+    for image in images:
+        image_urls.append(upload_image(image))
 
     project = models.Project(
         title=title,
         description=description,
-        image_url=image_url,
+        image_urls=",".join(image_urls),
         techstack=",".join(techstack),
-        category=category,   # ✅ NEW
+        category=category,
         live_link=live_link,
         is_visible=is_visible,
     )
@@ -54,9 +52,13 @@ def create_project(
     db.refresh(project)
 
     project.techstack = project.techstack.split(",")
+    project.image_urls = (
+        project.image_urls.split(",")
+        if project.image_urls
+        else []
+    )
 
     return project
-
 
 # -------------------------
 # Get All Projects
@@ -66,7 +68,6 @@ def get_projects(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-
     if current_user.is_admin:
         projects = db.query(models.Project)\
         .order_by(models.Project.updated_at.desc())\
@@ -78,7 +79,17 @@ def get_projects(
             .all()
 
     for project in projects:
-        project.techstack = project.techstack.split(",")
+        project.techstack = (
+            project.techstack.split(",")
+            if project.techstack
+            else []
+        )
+
+        project.image_urls = (
+            project.image_urls.split(",")
+            if project.image_urls
+            else []
+        )
 
     return projects
 
@@ -87,16 +98,26 @@ def get_projects(
 # -------------------------
 @router.get("/public", response_model=List[schemas.ProjectResponse])
 def get_public_projects(db: Session = Depends(get_db)):
-
     projects = db.query(models.Project)\
         .filter(models.Project.is_visible == True)\
         .order_by(models.Project.updated_at.desc())\
         .all()
 
     for project in projects:
-        project.techstack = project.techstack.split(",")
+        project.techstack = (
+            project.techstack.split(",")
+            if project.techstack
+            else []
+        )
+
+        project.image_urls = (
+            project.image_urls.split(",")
+            if project.image_urls
+            else []
+        )
 
     return projects
+
 # -------------------------
 # Get Project By ID
 # -------------------------
@@ -106,7 +127,6 @@ def get_project(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
-
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
 
     if not project:
@@ -115,7 +135,17 @@ def get_project(
     if not project.is_visible and not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Not authorized to view this project")
 
-    project.techstack = project.techstack.split(",")
+    project.techstack = (
+        project.techstack.split(",")
+        if project.techstack
+        else []
+    )
+
+    project.image_urls = (
+        project.image_urls.split(",")
+        if project.image_urls
+        else []
+    )
 
     return project
 
@@ -129,14 +159,13 @@ def update_project(
     title: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
     techstack: Optional[str] = Form(None),
-    category: Optional[str] = Form(None),   # ✅ NEW
+    category: Optional[str] = Form(None),
     live_link: Optional[str] = Form(None),
     is_visible: Optional[bool] = Form(None),
-    image: UploadFile = File(None),
+    images: Optional[List[SwaggerUploadFile]] = File(None),  # ✅ Uses Swagger-friendly type
     db: Session = Depends(get_db),
-    admin = Depends(get_current_admin),
+    admin=Depends(get_current_admin),
 ):
-
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
 
     if not project:
@@ -151,7 +180,7 @@ def update_project(
         project.techstack = techstack
         
     if category is not None:
-        project.category = category   # ✅ NEW
+        project.category = category
 
     if live_link:
         project.live_link = live_link
@@ -159,16 +188,27 @@ def update_project(
     if is_visible is not None:
         project.is_visible = is_visible
 
-    # ✅ Upload image to Cloudinary
-    if image:
-        image_url = upload_image(image)
-        project.image_url = image_url
+    # ✅ FIXED INDENTATION BUG: Logic now only runs if images are provided
+    if images:
+        image_urls = []
+        for image in images:
+            image_urls.append(upload_image(image))
+        project.image_urls = ",".join(image_urls)
 
     db.commit()
     db.refresh(project)
 
-    if project.techstack:
-        project.techstack = project.techstack.split(",")
+    project.techstack = (
+        project.techstack.split(",")
+        if project.techstack
+        else []
+    )
+
+    project.image_urls = (
+        project.image_urls.split(",")
+        if project.image_urls
+        else []
+    )
 
     return project
 
@@ -182,7 +222,6 @@ def delete_project(
     db: Session = Depends(get_db),
     admin = Depends(get_current_admin),
 ):
-
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
 
     if not project:
@@ -204,7 +243,6 @@ def update_visibility(
     db: Session = Depends(get_db),
     admin = Depends(get_current_admin),
 ):
-
     project = db.query(models.Project).filter(models.Project.id == project_id).first()
 
     if not project:
@@ -215,5 +253,3 @@ def update_visibility(
     db.refresh(project)
 
     return {"message": "Visibility updated successfully"}
-
-
