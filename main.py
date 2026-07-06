@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from database import engine, Base
 from routes import auth, projects, admin
+from routes.contact import router as contact_router
+
 
 # =========================
 # CREATE DATABASE TABLES
@@ -45,7 +47,7 @@ print("CORS CONFIG LOADED")
 app.include_router(auth.router)
 app.include_router(projects.router)
 app.include_router(admin.router)
-
+app.include_router(contact_router, prefix="/api")
 # =========================
 # ROOT ROUTE
 # =========================
