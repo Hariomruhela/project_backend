@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File,
 from sqlalchemy.orm import Session
 from typing import List, Optional, Annotated  # Added Annotated
 from pydantic import WithJsonSchema           # Added WithJsonSchema
-
+import json
 import models, schemas
 from database import get_db
 from dependencies import get_current_user, get_current_admin
@@ -158,42 +158,56 @@ def update_project(
     project_id: int,
     title: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
-    techstack: Optional[str] = Form(None),
+    techstack: List[str] = Form([]),
     category: Optional[str] = Form(None),
     live_link: Optional[str] = Form(None),
     is_visible: Optional[bool] = Form(None),
-    images: Optional[List[SwaggerUploadFile]] = File(None),  # ✅ Uses Swagger-friendly type
+    existing_images: Optional[str] = Form(None),
+    images: List[SwaggerUploadFile] = File([]),
     db: Session = Depends(get_db),
     admin=Depends(get_current_admin),
 ):
-    project = db.query(models.Project).filter(models.Project.id == project_id).first()
+    project = db.query(models.Project).filter(
+        models.Project.id == project_id
+    ).first()
 
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found"
+        )
 
-    if title:
+    if title is not None:
         project.title = title
 
-    if description:
+    if description is not None:
         project.description = description
+
     if techstack:
-        project.techstack = techstack
-        
+        project.techstack = ",".join(techstack)
+
     if category is not None:
         project.category = category
 
-    if live_link:
+    if live_link is not None:
         project.live_link = live_link
 
     if is_visible is not None:
         project.is_visible = is_visible
 
-    # ✅ FIXED INDENTATION BUG: Logic now only runs if images are provided
-    if images:
-        image_urls = []
-        for image in images:
-            image_urls.append(upload_image(image))
-        project.image_urls = ",".join(image_urls)
+    # Final images after update
+    final_images = []
+
+    # Keep only the images sent by the frontend
+    if existing_images:
+        final_images = json.loads(existing_images)
+
+    # Upload newly selected images
+    for image in images:
+        url = upload_image(image)
+        final_images.append(url)
+
+    project.image_urls = ",".join(final_images)
 
     db.commit()
     db.refresh(project)
