@@ -26,6 +26,8 @@ origins = [
     "http://localhost:3000",
     "http://localhost:5173",
     "https://techquitoes.com",
+    "https://www.techquitoes.com",
+    "www.techquitoes.com",
     
 
     # Frontend production URL
